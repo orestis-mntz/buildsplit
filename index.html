@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PC Build Calculator — Βρες το ιδανικό build για το budget σου</title>
+<meta name="description" content="Βάλε το budget σου, διάλεξε χρήση, και πάρε προτεινόμενη κατανομή για CPU, GPU, RAM και τα υπόλοιπα μέρη του υπολογιστή σου.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #eef2f6;
+    --panel: #ffffff;
+    --line: #ccd6e0;
+    --ink: #17202b;
+    --ink-dim: #5b6675;
+    --accent: #e0972a;
+    --accent-deep: #a8690f;
+    --accent-soft: #fbeed9;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 32px 32px;
+    background-attachment: fixed;
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.55;
+  }
+
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 20px; }
+
+  header.site {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 22px 0;
+  }
+  .logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+  }
+  .logo span { color: var(--accent-deep); }
+  .logo-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    color: var(--ink-dim);
+  }
+
+  h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: clamp(26px, 4vw, 36px);
+    max-width: 620px;
+    margin: 20px 0 10px;
+  }
+  .lede { color: var(--ink-dim); max-width: 560px; margin-bottom: 32px; }
+
+  /* CALCULATOR CARD */
+  .calc {
+    background: var(--panel);
+    border: 1.5px solid var(--line);
+    border-radius: 6px;
+    padding: 28px;
+    margin-bottom: 48px;
+  }
+  .calc-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 22px;
+  }
+  .field label {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: var(--ink-dim);
+    margin-bottom: 8px;
+  }
+  .field input[type="number"] {
+    width: 100%;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    border: none;
+    border-bottom: 2px solid var(--line);
+    background: transparent;
+    padding: 4px 0;
+    color: var(--ink);
+  }
+  .field input[type="number"]:focus { outline: none; border-color: var(--accent); }
+
+  .use-options {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .use-btn {
+    font-family: 'Inter', sans-serif;
+    font-size: 13.5px;
+    font-weight: 500;
+    padding: 9px 14px;
+    border-radius: 20px;
+    border: 1.5px solid var(--line);
+    background: transparent;
+    color: var(--ink-dim);
+    cursor: pointer;
+  }
+  .use-btn.active {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: #fff;
+  }
+
+  .btn-calc {
+    width: 100%;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    background: var(--accent);
+    color: #2a1a05;
+    border: none;
+    padding: 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+  .btn-calc:hover { background: var(--accent-deep); color: #fff; }
+
+  /* RESULTS */
+  #results { display: none; margin-top: 28px; border-top: 1px solid var(--line); padding-top: 24px; }
+  #results.show { display: block; }
+
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .result-row:last-child { border-bottom: none; }
+  .result-part {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--ink-dim);
+    width: 110px;
+    flex-shrink: 0;
+  }
+  .result-bar-wrap {
+    flex-grow: 1;
+    height: 8px;
+    background: var(--accent-soft);
+    border-radius: 4px;
+    margin: 0 16px;
+    overflow: hidden;
+  }
+  .result-bar { height: 100%; background: var(--accent); border-radius: 4px; }
+  .result-amount {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    width: 70px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .example-note {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-dim);
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--line);
+  }
+
+  /* SUPPORTING CONTENT */
+  .info { padding: 8px 0 60px; }
+  .info h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 20px;
+    margin: 32px 0 12px;
+  }
+  .info p { color: var(--ink-dim); max-width: 640px; margin-bottom: 10px; }
+
+  footer.site {
+    padding: 20px 0 40px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-dim);
+  }
+
+  input:focus-visible, button:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: 2px; }
+
+  @media (max-width: 560px) {
+    .calc-row { grid-template-columns: 1fr; }
+    .result-part { width: 84px; font-size: 11.5px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="site">
+    <div class="logo">build<span>split</span></div>
+    <div class="logo-tag">// pc part budget calculator</div>
+  </header>
+
+  <h1>Πόσα να δώσεις σε κάθε κομμάτι του υπολογιστή σου;</h1>
+  <p class="lede">Βάλε το συνολικό budget σου και τι θα κάνεις κυρίως με το PC. Θα σου δείξουμε πώς να το μοιράσεις ανά κατηγορία, ώστε να μην ξοδέψεις υπερβολικά σε ένα κομμάτι εις βάρος των υπολοίπων.</p>
+
+  <div class="calc">
+    <div class="calc-row">
+      <div class="field">
+        <label for="budget">Συνολικό budget (€)</label>
+        <input type="number" id="budget" value="900" min="200" step="10">
+      </div>
+      <div class="field">
+        <label>Κύρια χρήση</label>
+        <div class="use-options" id="use-options">
+          <button class="use-btn active" data-use="gaming">Gaming</button>
+          <button class="use-btn" data-use="editing">Video editing</button>
+          <button class="use-btn" data-use="general">Γενική χρήση</button>
+        </div>
+      </div>
+    </div>
+    <button class="btn-calc" id="calc-btn">Υπολόγισε κατανομή</button>
+
+    <div id="results"></div>
+  </div>
+
+  <div class="info">
+    <h2>Γιατί αυτή η κατανομή</h2>
+    <p>Σε ένα gaming PC, η κάρτα γραφικών (GPU) καθορίζει το μεγαλύτερο μέρος της απόδοσης σε παιχνίδια, γι' αυτό παίρνει το μεγαλύτερο κομμάτι του budget. Σε video editing, ο επεξεργαστής (CPU) και η μνήμη RAM παίζουν μεγαλύτερο ρόλο, οπότε η αναλογία αλλάζει.</p>
+    <p>Αυτά τα ποσοστά είναι ένας καλός γενικός κανόνας, όχι απόλυτος νόμος — αν ήδη έχεις κάποιο κομμάτι (π.χ. οθόνη, πληκτρολόγιο), μπορείς να δώσεις τη διαφορά σε GPU/CPU.</p>
+
+    <h2>Συχνό λάθος αρχαρίων</h2>
+    <p>Το πιο συνηθισμένο λάθος είναι να ξοδεύεις πολλά σε PSU (τροφοδοτικό) high-end χωρίς λόγο, ή σε RGB/αισθητικά, και να μένεις με λιγότερα για GPU — το κομμάτι που πραγματικά καθορίζει τα FPS στα παιχνίδια.</p>
+  </div>
+
+  <footer class="site">buildsplit — εργαλείο κατανομής budget για PC builds</footer>
+</div>
+
+<script>
+  const splits = {
+    gaming:  { GPU: 0.38, CPU: 0.19, RAM: 0.07, Αποθήκευση: 0.09, Motherboard: 0.09, PSU: 0.08, Ψύξη: 0.04, Κουτί: 0.06 },
+    editing: { CPU: 0.28, RAM: 0.14, GPU: 0.22, Αποθήκευση: 0.12, Motherboard: 0.09, PSU: 0.08, Ψύξη: 0.03, Κουτί: 0.04 },
+    general: { CPU: 0.22, GPU: 0.16, RAM: 0.10, Αποθήκευση: 0.14, Motherboard: 0.14, PSU: 0.10, Ψύξη: 0.04, Κουτί: 0.10 }
+  };
+
+  let currentUse = 'gaming';
+
+  document.querySelectorAll('.use-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.use-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentUse = btn.dataset.use;
+    });
+  });
+
+  document.getElementById('calc-btn').addEventListener('click', () => {
+    const budget = parseFloat(document.getElementById('budget').value) || 0;
+    const split = splits[currentUse];
+    const resultsEl = document.getElementById('results');
+
+    let html = '';
+    const maxPct = Math.max(...Object.values(split));
+
+    for (const [part, pct] of Object.entries(split)) {
+      const amount = Math.round(budget * pct);
+      const barWidth = Math.round((pct / maxPct) * 100);
+      html += `
+        <div class="result-row">
+          <span class="result-part">${part}</span>
+          <div class="result-bar-wrap"><div class="result-bar" style="width:${barWidth}%"></div></div>
+          <span class="result-amount">${amount}€</span>
+        </div>`;
+    }
+
+    html += `<div class="example-note">// υπολογισμένο για budget ${budget}€, χρήση: ${currentUse}</div>`;
+
+    resultsEl.innerHTML = html;
+    resultsEl.classList.add('show');
+  });
+
+  // Run once on load with defaults
+  document.getElementById('calc-btn').click();
+</script>
+
+</body>
+</html>
